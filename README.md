@@ -32,10 +32,11 @@ npx prisma migrate dev
 npm run dev
 ```
 # High-Level Architecture
-![flowchart](./image.png)
+![flowchart](./workflow.png)
 
     
 ## API Endpoints
+```html
 Endpoint	Description
 /api/tenants	Add / list stores
 /api/tenants/:shop/sync	Trigger ingestion
@@ -43,9 +44,40 @@ Endpoint	Description
 /api/insights/aov	AOV trend
 /api/insights/orders-by-hour	Orders heatmap
 /api/events	Webhook receiver
-Architecture Diagram
-Shopify Store → Ingestion APIs → PostgreSQL → Dashboard UI
+```
+## Database Schema
+```txt
+Tenant
+- id
+- shop
+- accessToken
+- createdAt
 
+Customer
+- id
+- tenantId (FK)
+- shopifyId
+- firstName
+- lastName
+- email
+- totalSpent
+
+Order
+- id
+- tenantId (FK)
+- shopifyId
+- totalPrice
+- currency
+- createdAt
+- customerId (FK)
+
+Product
+- id
+- tenantId (FK)
+- shopifyId
+- title
+- price
+```
 ## Known Limitations
 
 Shopify OAuth not implemented (token-based auth only).
