@@ -1,0 +1,94 @@
+generator client {
+  provider = "prisma-client-js" // or "prisma-client" depending on your setup
+}
+
+datasource db {
+  provider = "postgresql"
+  // url removed — it will be set in prisma.config.ts
+}
+
+model User {
+  id        Int      @id @default(autoincrement())
+  email     String   @unique
+  password  String // bcrypt hash
+  createdAt DateTime @default(now())
+  // optionally: link user to a tenant or many tenants if you want multi-tenant user mapping
+  // tenantId Int? // if you want to restrict user to a tenant
+}
+
+model Tenant {
+  id          Int      @id @default(autoincrement())
+  shop        String   @unique
+  accessToken String
+  scope       String?
+  installedAt DateTime @default(now())
+
+  customers Customer[]
+  products  Product[]
+  orders    Order[]
+  events    Event[]
+}
+
+model Customer {
+  id         Int       @id @default(autoincrement())
+  tenant     Tenant    @relation(fields: [tenantId], references: [id])
+  tenantId   Int
+  shopifyId  String    @unique
+  email      String?
+  firstName  String?
+  lastName   String?
+  totalSpent Float     @default(0)
+  createdAt  DateTime?
+  updatedAt  DateTime?
+
+  // <- add opposite relation here:
+  orders Order[] // a customer can have many orders
+}
+
+model Product {
+  id        Int       @id @default(autoincrement())
+  tenant    Tenant    @relation(fields: [tenantId], references: [id])
+  tenantId  Int
+  shopifyId String    @unique
+  title     String
+  sku       String?
+  price     Float?
+  createdAt DateTime?
+  updatedAt DateTime?
+}
+
+model Order {
+  id         Int      @id @default(autoincrement())
+  tenant     Tenant   @relation(fields: [tenantId], references: [id])
+  tenantId   Int
+  shopifyId  String   @unique
+  totalPrice Float
+  currency   String
+  createdAt  DateTime
+
+  // relation to Customer (optional)
+  customer   Customer? @relation(fields: [customerId], references: [id])
+  customerId Int?
+
+  status     String?
+  orderItems OrderItem[]
+}
+
+model OrderItem {
+  id      Int    @id @default(autoincrement())
+  order   Order  @relation(fields: [orderId], references: [id])
+  orderId Int
+  title   String
+  qty     Int
+  price   Float
+}
+
+model Event {
+  id         Int      @id @default(autoincrement())
+  tenant     Tenant   @relation(fields: [tenantId], references: [id])
+  tenantId   Int
+  shopifyId  String?
+  topic      String
+  payload    Json
+  receivedAt DateTime @default(now())
+}
